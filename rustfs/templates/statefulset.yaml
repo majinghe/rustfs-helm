@@ -25,6 +25,17 @@ spec:
             - sh
             - -c
             - |
+              # 等待所有 Pod 都启动完成
+              echo "Waiting for all pods to be ready..."
+              for i in $(seq 0 $(($REPLICA_COUNT - 1))); do
+                while ! nslookup rustfs-$i.rustfs-headless.rustfs.svc.cluster.local >/dev/null 2>&1; do
+                  echo "Waiting for rustfs-$i to be ready..."
+                  sleep 2
+                done
+                echo "rustfs-$i is ready"
+              done
+              echo "All pods are ready, proceeding with initialization..."
+
               if [ "$REPLICA_COUNT" -eq 4 ]; then
                 for i in $(seq 0 $(($REPLICA_COUNT - 1))); do
                   mkdir -p /data/rustfs$i
@@ -39,7 +50,7 @@ spec:
             {{- if eq (int .Values.replicaCount) 4 }}
             {{- range $i := until (int .Values.replicaCount) }}
             - name: data-rustfs-{{ $i }}
-              mountPath: /data/rustfs-{{ $i }}
+              mountPath: /data/rustfs{{ $i }}
             {{- end }}
             {{- else if eq (int .Values.replicaCount) 16 }}
             - name: data
@@ -50,8 +61,7 @@ spec:
       containers:
         - name: {{ .Chart.Name }}
           image: "{{ .Values.image.repository }}:{{ .Values.image.tag }}"
-          command: [ "/bin/sh", "-c" ]
-          args: [ "/usr/bin/rustfs $RUSTFS_VOLUMES" ]
+          command: ["/usr/bin/rustfs"]
           imagePullPolicy: {{ .Values.image.pullPolicy }}
           securityContext:
             runAsUser: 1000
@@ -60,6 +70,9 @@ spec:
               name: endpoint
             - containerPort: {{ .Values.service.console_port }}
               name: console
+          env:
+            - name: REPLICA_COUNT
+              value: "{{ .Values.replicaCount }}"
           envFrom:
             - configMapRef:
                 name: {{ include "rustfs.fullname" . }}-config
@@ -75,8 +88,11 @@ spec:
           readinessProbe:
             tcpSocket:
               port: 9000
-            initialDelaySeconds: 5
+            initialDelaySeconds: 10
             periodSeconds: 5
+            timeoutSeconds: 3
+            successThreshold: 1
+            failureThreshold: 3
           volumeMounts:
             - name: logs
               mountPath: /logs
