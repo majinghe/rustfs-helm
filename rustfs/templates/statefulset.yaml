@@ -25,17 +25,6 @@ spec:
             - sh
             - -c
             - |
-              # 等待所有 Pod 都启动完成
-              echo "Waiting for all pods to be ready..."
-              for i in $(seq 0 $(($REPLICA_COUNT - 1))); do
-                while ! nslookup rustfs-$i.rustfs-headless.rustfs.svc.cluster.local >/dev/null 2>&1; do
-                  echo "Waiting for rustfs-$i to be ready..."
-                  sleep 2
-                done
-                echo "rustfs-$i is ready"
-              done
-              echo "All pods are ready, proceeding with initialization..."
-
               if [ "$REPLICA_COUNT" -eq 4 ]; then
                 for i in $(seq 0 $(($REPLICA_COUNT - 1))); do
                   mkdir -p /data/rustfs$i
@@ -85,9 +74,25 @@ spec:
             limits:
               memory: {{ .Values.resources.limits.memory }}
               cpu: {{ .Values.resources.limits.cpu }}
+          livenessProbe:
+            exec:
+              command:
+                - sh
+                - -c
+                - "pgrep rustfs > /dev/null"
+            initialDelaySeconds: 10
+            periodSeconds: 5
+            timeoutSeconds: 3
+            successThreshold: 1
+            failureThreshold: 3
           readinessProbe:
-            tcpSocket:
-              port: 9000
+            exec:
+              command:
+                - sh
+                - -c
+                - "pgrep rustfs > /dev/null"
+            #tcpSocket:
+            #  port: 9000
             initialDelaySeconds: 10
             periodSeconds: 5
             timeoutSeconds: 3

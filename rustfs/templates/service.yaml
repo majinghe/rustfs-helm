@@ -8,7 +8,11 @@ spec:
   clusterIP: None
   publishNotReadyAddresses: true
   ports:
+    {{- if .Values.ingress.enabled }}
     - port: 80
+    {{- else }}
+    - port: {{ .Values.service.ep_port }}
+    {{- end }}
       targetPort: {{ .Values.service.ep_port }}
       protocol: TCP
       name: endpoint
@@ -27,12 +31,19 @@ metadata:
   labels:
     {{- include "rustfs.labels" . | nindent 4 }}
 spec:
-  type: {{ .Values.service.type }}
-  #  type: LoadBalancer
+  {{- if .Values.ingress.enabled }}
+  type: ClusterIP
+  {{- else }}
+  type: NodePort
+  {{- end }}
   publishNotReadyAddresses: true
   ports:
+    {{- if .Values.ingress.enabled }}
+    - port: 80
+    {{- else }}
     - port: {{ .Values.service.ep_port }}
-      targetPort: {{ .Values.service.ep_port }}
+    {{- end }}
+      targetPort: 9000
       protocol: TCP
       name: endpoint
     - port: {{ .Values.service.console_port }}
