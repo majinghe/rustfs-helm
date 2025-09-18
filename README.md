@@ -66,7 +66,7 @@ spec:
   entryPoints:
     - web
   routes:
-    - match: Host(`jhma.jihulab.net`)
+    - match: Host(`your.rustfs.com`)
       kind: Rule
       services:
         - name: rustfs-svc
