@@ -75,25 +75,20 @@ spec:
               memory: {{ .Values.resources.limits.memory }}
               cpu: {{ .Values.resources.limits.cpu }}
           livenessProbe:
-            exec:
-              command:
-                - sh
-                - -c
-                - "pgrep rustfs > /dev/null"
+            httpGet:
+              path: /health
+              port: 9000
             initialDelaySeconds: 10
             periodSeconds: 5
             timeoutSeconds: 3
             successThreshold: 1
             failureThreshold: 3
           readinessProbe:
+            httpGet:
+              path: /health
+              port: 9000
             exec:
-              command:
-                - sh
-                - -c
-                - "pgrep rustfs > /dev/null"
-            #tcpSocket:
-            #  port: 9000
-            initialDelaySeconds: 10
+            initialDelaySeconds: 30
             periodSeconds: 5
             timeoutSeconds: 3
             successThreshold: 1
