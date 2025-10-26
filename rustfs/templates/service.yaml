@@ -6,7 +6,7 @@ metadata:
     {{- include "rustfs.labels" . | nindent 4 }}
 spec:
   clusterIP: None
-  publishNotReadyAddresses: true
+  #  publishNotReadyAddresses: true
   ports:
     {{- if .Values.ingress.enabled }}
     - port: 80
@@ -36,7 +36,11 @@ spec:
   {{- else }}
   type: NodePort
   {{- end }}
-  publishNotReadyAddresses: true
+  sessionAffinity: ClientIP
+  sessionAffinityConfig:
+    clientIP:
+      timeoutSeconds: 10800
+  #publishNotReadyAddresses: true
   ports:
     {{- if .Values.ingress.enabled }}
     - port: 80
