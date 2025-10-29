@@ -5,9 +5,11 @@ metadata:
   name: {{ include "rustfs.fullname" . }}
   labels:
     {{- include "rustfs.labels" . | nindent 4 }}
-  {{- with .Values.ingress.annotations }}
+  {{- if eq .Values.ingress.className "nginx" }}
+  {{- with .Values.ingress.nginxAnnotations }}
   annotations:
     {{- toYaml . | nindent 4 }}
+  {{- end }}
   {{- end }}
 spec:
   {{- with .Values.ingress.className }}
@@ -37,7 +39,7 @@ spec:
               service:
                 name: {{ include "rustfs.fullname" $ }}-svc
                 port:
-                  number: 80
+                  name: console
           {{- end }}
     {{- end }}
 {{- end }}
