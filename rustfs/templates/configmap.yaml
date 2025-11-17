@@ -9,9 +9,13 @@ data:
   RUSTFS_SINKS_FILE_PATH: {{ .Values.config.rustfs.sinks_file_path | quote }}
   RUSTFS_CONSOLE_ENABLE: {{ .Values.config.rustfs.console_enable | quote }}
   RUSTFS_LOG_LEVEL: {{ .Values.config.rustfs.log_level | quote }}
+  {{- if .Values.mode.distributed.enabled }}
   {{- if eq (int .Values.replicaCount) 4 }}
   RUSTFS_VOLUMES: "http://rustfs-{0...3}.rustfs-headless.rustfs.svc.cluster.local:9000/data/rustfs{0...3}"
   {{- else if eq (int .Values.replicaCount) 16 }}
   RUSTFS_VOLUMES: "http://rustfs-{0...15}.rustfs-headless.rustfs.svc.cluster.local:9000/data"
+  {{- end }}
+  {{- else }}
+  RUSTFS_VOLUMES: "/data"
   {{- end }}
   RUSTFS_OBS_ENVIRONMENT: "develop"
